@@ -1,16 +1,15 @@
 # .github/workflows/build.yml
-name: Build Windows & Linux Binaries
+name: Build ONScripter-Jh Binaries
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
   pull_request:
   workflow_dispatch:
 
 permissions:
-  contents: read      # 允许读取仓库
-  actions: write      # 允许下载并执行 marketplace Actions（包括 upload-artifact@v4）
+  contents: read
+  actions: write
 
 jobs:
   build:
@@ -18,17 +17,17 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [windows-latest, ubuntu-latest]
+        os: [ windows-latest, ubuntu-latest ]
 
     steps:
-      - name: Checkout source
+      - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Set up environment (Windows)
+      - name: Set up Windows build env
         if: matrix.os == 'windows-latest'
-        run: echo "Using pre-installed Visual Studio + nmake"
+        run: echo "Using VS + nmake"
 
-      - name: Install build tools (Linux)
+      - name: Install Linux build tools
         if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get update
@@ -39,7 +38,7 @@ jobs:
         run: nmake -f Makefile.Win
         shell: cmd
 
-      - name: Smoke test Windows binary
+      - name: Test Windows binary
         if: matrix.os == 'windows-latest'
         run: .\onscripter.exe --version
         shell: cmd
@@ -49,26 +48,22 @@ jobs:
         run: make -f Makefile.Linux
         shell: bash
 
-      - name: Smoke test Linux binary
+      - name: Test Linux binary
         if: matrix.os == 'ubuntu-latest'
         run: ./onscripter --version
         shell: bash
 
-      - name: Organize outputs (Windows)
-        if: matrix.os == 'windows-latest'
+      - name: Collect outputs
         run: |
-          mkdir -p dist/windows
-          move onscripter.exe dist/windows/
-        shell: cmd
-
-      - name: Organize outputs (Linux)
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          mkdir -p dist/linux
-          mv onscripter dist/linux/
+          mkdir -p dist/${{ matrix.os == 'windows-latest' && 'windows' || 'linux' }}
+          if [ "${{ matrix.os }}" == "windows-latest" ]; then
+            move onscripter.exe dist/windows/
+          else
+            mv onscripter dist/linux/
+          fi
         shell: bash
 
-      - name: Upload artifact
+      - name: Upload binaries
         uses: actions/upload-artifact@v4
         with:
           name: onscripter-${{ matrix.os }}
