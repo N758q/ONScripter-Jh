@@ -1,0 +1,70 @@
+# .github/workflows/build.yml
+name: Build Windows & Linux Binaries
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  build:
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v3
+
+      - name: Set up environment (Windows)
+        if: matrix.os == 'windows-latest'
+        run: echo "Using pre-installed Visual Studio + nmake"
+
+      - name: Install build tools (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y make build-essential
+
+      - name: Build on Windows
+        if: matrix.os == 'windows-latest'
+        run: nmake -f Makefile.Win
+        shell: cmd
+
+      - name: Smoke test Windows binary
+        if: matrix.os == 'windows-latest'
+        run: .\onscripter.exe --version
+        shell: cmd
+
+      - name: Build on Linux
+        if: matrix.os == 'ubuntu-latest'
+        run: make -f Makefile.Linux
+        shell: bash
+
+      - name: Smoke test Linux binary
+        if: matrix.os == 'ubuntu-latest'
+        run: ./onscripter --version
+        shell: bash
+
+      - name: Organize outputs (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          mkdir -p dist/windows
+          move onscripter.exe dist/windows/
+        shell: cmd
+
+      - name: Organize outputs (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          mkdir -p dist/linux
+          mv onscripter dist/linux/
+        shell: bash
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: onscripter-${{ matrix.os }}
+          path: dist
