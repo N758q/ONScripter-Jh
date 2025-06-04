@@ -9,8 +9,8 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
-  actions: write
+  contents: read      # 允许读取仓库
+  actions: write      # 允许下载并执行 marketplace Actions（包括 upload-artifact@v4）
 
 jobs:
   build:
@@ -68,8 +68,8 @@ jobs:
           mv onscripter dist/linux/
         shell: bash
 
-      - name: Upload artifact (stable v2)
-        uses: actions/upload-artifact@v2.3.1
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
         with:
           name: onscripter-${{ matrix.os }}
           path: dist
