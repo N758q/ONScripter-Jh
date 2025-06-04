@@ -1,4 +1,4 @@
-# .github/workflows/build.ym
+# .github/workflows/build.yml
 name: Build Windows & Linux Binaries
 
 on:
@@ -7,6 +7,10 @@ on:
       - main
   pull_request:
   workflow_dispatch:
+
+permissions:
+  contents: read      # 允许读取仓库代码
+  actions: write      # 允许下载并执行 marketplace Actions（如 upload-artifact）
 
 jobs:
   build:
